@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Grupos de vertebrados</title>
+<style>
+  /* ====== Reset & base ====== */
+  * { box-sizing: border-box; margin:0; padding:0; }
+  :root{
+    --blue:#07145e;
+    --blue-dark:#04032B;
+    --blue-700:#1a3a5f;
+    --blue-600:#254fba;
+    --orange:#f59e42;
+    --orange-700:#e67e22;
+    --bg-grad-1:#1a3a5f;
+    --bg-grad-2:#0d2340;
+    --white:#ffffff;
+    --green:#2ecc71;
+    --red:#e74c3c;
+    --panel:#E8EAFF;
+    
+    /* Colores Iniciales 1º Primaria */
+    --color-m: #8B4513; /* Marrón */
+    --color-a-ave: #FFD700; /* Amarillo */
+    --color-r: #006400; /* Verde Oscuro */
+    --color-p: #0000FF; /* Azul */
+    --color-a-anf: #7FFF00; /* Verde Claro */
+  }
+  body{
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
+    min-height:100vh; display:flex; justify-content:center; align-items:center; color:#333; padding:10px;
+  }
+  .game-container{
+    background:var(--white); border-radius:16px; box-shadow:0 12px 24px rgba(0,0,0,.12);
+    padding:1.2rem; max-width:980px; width:100%; min-height:680px;
+    position:relative; overflow:hidden;
+    display:flex; flex-direction:column;
+  }
+  header{ text-align:center; margin-bottom:.8rem; margin-top:2rem; }
+  h1{ color:var(--blue); font-size:clamp(2rem,5.2vw,3.1rem); font-weight:900; letter-spacing:.5px; }
+  .subtitle{ color:var(--blue-700); font-size:clamp(1rem,3.5vw,1.25rem); margin-top:.25rem; }
+  .highlight-keyword{ color:var(--orange); font-weight:800; }
+
+  /* Global UI bits */
+  .btn{ color:#fff; border:none; padding:.75rem 1.2rem; border-radius:10px; cursor:pointer; font-weight:800;
+        transition:transform .08s ease, box-shadow .2s ease, background-color .25s ease; min-width:140px; height:48px;
+        display:inline-flex; align-items:center; justify-content:center; font-size: 1rem;}
+  .btn:hover{ transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); }
+  .btn:active{ transform:translateY(0); }
+  .btn:disabled{ opacity: .6; cursor: not-allowed; }
+  .btn-primary{ background:var(--orange); }
+  .btn-primary:hover{ background:var(--orange-700); }
+  .btn-blue{ background:var(--blue-600); }
+  .btn-blue:hover{ filter:brightness(.9); }
+  .btn-ghost{ background:#e6f2ff; color:var(--blue-700); }
+
+  .screen{ display:none; animation:fadeIn .35s ease; padding-bottom: 1rem;}
+  .screen.active{ display:block; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
+
+  /* Top controls (timer / progress / level) */
+  .game-info{ display:flex; gap:.6rem; align-items:center; justify-content:space-between; margin:.4rem 0 1rem; flex-wrap:wrap; }
+  .timer, .level-indicator{ font-weight:900; color:var(--blue-700); font-size:clamp(.95rem,2.3vw,1.15rem); }
+  .progress-bar{ flex:1; height:10px; background:#e6f2ff; border-radius:999px; overflow:hidden; }
+  .progress-fill{ height:100%; width:0%; background:var(--orange); transition:width .3s ease; }
+
+  /* Start screen */
+  .start-content { display:flex; flex-direction:column; justify-content:center; align-items:center; flex:1; gap:1rem; padding:1rem; width:100%;}
+  .advice-box{ background:var(--panel); border-left:4px solid var(--blue-700); padding:1rem 1.2rem; border-radius:12px;
+               color:var(--blue-700); max-width:760px; text-align:center; font-size:clamp(1rem,3vw,1.15rem); }
+  .start-image{ max-width: 300px; width: 100%; margin: 1rem auto 0; display: block; }
+
+  /* Sound button */
+  .mute-btn{ position:absolute; top:.8rem; right:.8rem; background:var(--orange); color:#fff; border:2px solid #fff; width:38px; height:38px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; z-index:20; }
+  .mute-btn:hover{ background:var(--orange-700); }
+
+  /* Game layout */
+  .board{ display:flex; flex-direction:column; gap:.8rem; align-items:center; justify-content:center; flex: 1; width: 100%; }
+
+  /* Image stage */
+  .image-container { 
+      width:100%; 
+      max-width:320px; 
+      margin:0 auto; 
+      padding:.8rem; 
+      border:1px solid #ddd; 
+      border-radius:10px; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      background-color: #FFFFFF; 
+  }
+  .image-container img { display: block; max-width: 100%; height: auto; border-radius: 8px; object-fit: contain; max-height: 250px;}
+
+  /* Dropdown styling (Select List) - Opens UP */
+  .select-container { position:relative; max-width: 300px; width: 100%; margin: 0.5rem auto; text-align: center; z-index: 100; }
+  .select-label { display: block; margin-bottom: 0.4rem; font-weight: 800; color: var(--blue-700); font-size: 0.95rem; }
+  .custom-select {
+    position: relative;
+    font-family: inherit;
+    width: 100%;
+    cursor: pointer;
+    background-color: #f8fbff;
+    border: 2px solid #d3e2ff;
+    border-radius: 10px;
+    padding: 0.6rem 0.85rem;
+    color: var(--blue-700);
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+  }
+  .custom-select:hover { border-color: var(--blue-600); }
+  .select-arrow { transition: transform 0.2s; font-size: 0.85rem; }
+  .custom-select.open .select-arrow { transform: rotate(180deg); }
+  
+  .select-options {
+    position: absolute;
+    bottom: 100%; 
+    left: 0;
+    right: 0;
+    z-index: 110;
+    background-color: var(--white);
+    border: 2px solid #ddd;
+    border-radius: 10px 10px 0 0;
+    max-height: 0;
+    overflow-y: hidden;
+    transition: max-height 0.3s ease-out;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+    margin-bottom: 0px;
+  }
+  .select-options.open { 
+    max-height: 500px; 
+    overflow-y: auto;
+  }
+  .select-option {
+    padding: 0.8rem 0.85rem;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: #333;
+    text-align: left;
+    transition: background-color 0.1s;
+    border-bottom: 1px solid #eee;
+  }
+  .select-option:hover { background-color: #f0f0f0; }
+
+  /* Estilos para iniciales gigantes */
+  .letter-m { font-size: 1.8rem; font-weight: 900; color: var(--color-m); }
+  .letter-a-ave { font-size: 1.8rem; font-weight: 900; color: var(--color-a-ave); }
+  .letter-r { font-size: 1.8rem; font-weight: 900; color: var(--color-r); }
+  .letter-p { font-size: 1.8rem; font-weight: 900; color: var(--color-p); }
+  .letter-a-anf { font-size: 1.8rem; font-weight: 900; color: var(--color-a-anf); }
+
+  /* Dropdown state styles */
+  .custom-select.correct { border-color: var(--green); background-color: #ecfff4; }
+  .custom-select.incorrect { border-color: var(--red); background-color: #fff1f1; }
+
+  .select-selected {
+    padding: 0.2rem 0.4rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+  }
+  .select-selected.correct-blink { animation: correct-flash 0.2s linear; }
+  .select-selected.incorrect-blink { animation: incorrect-flash 0.3s linear; }
+
+  @keyframes correct-flash { 0% { background-color: #ecfff4; } 50% { background-color: var(--green); } 100% { background-color: #ecfff4; } }
+  @keyframes incorrect-flash { 0% { background-color: #fff1f1; } 50% { background-color: var(--red); } 100% { background-color: #fff1f1; } }
+
+  .game-buttons-area { display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; min-height: 50px; }
+
+  /* Results screen */
+  .results{ display:flex; flex-direction:column; align-items:center; gap:.6rem; text-align:center; min-height:calc(100vh - 180px); }
+  .final-title{ color:var(--blue-dark); font-weight:900; }
+  .big-score{ font-size:clamp(2.2rem,6vw,3.4rem); color:var(--blue-600); font-weight:900; }
+  .score-title{ font-size:1.0rem; color:var(--blue-700); margin-top:1rem; }
+  .final-time{ color:var(--blue-700); }
+  .trophy{ font-size:clamp(4rem,10vw,6rem); margin:.2rem 0; color:var(--orange); animation:bounce 1s ease infinite; }
+  @keyframes bounce { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-8px);} }
+  .credit{ color:var(--blue-700); margin-top:1rem; }
+  .school-logo{ display:block; margin:1rem auto 0; max-width:160px; height:auto; }
+
+  .final-msg-style {
+      color: var(--blue-dark);
+      font-weight: 800;
+      font-size: clamp(1.4rem, 4vw, 1.8rem);
+      margin: 0.5rem 0 1rem;
+      line-height: 1.4;
+  }
+
+  /* Confetti */
+  .confetti{ position:fixed; width:10px; height:10px; border-radius:50%; animation: confetti-fall 3s linear forwards; z-index:999; }
+  @keyframes confetti-fall{ 0%{ transform:translate(0, -20px) rotate(0); opacity:1;} 100%{ transform:translate(var(--tx), var(--ty)) rotate(360deg); opacity:0; } }
+  
+  /* Loading Indicator */
+  .loading-indicator {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7);
+    display: flex; justify-content: center; align-items: center; z-index: 2000; flex-direction: column;
+  }
+  .loading-spinner {
+    width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--orange);
+    border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
+  }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  .loading-text { color: white; font-size: 1.2rem; text-align: center; }
+
+  .game-help-text {
+    font-size: 0.95rem;
+    color: var(--blue-700);
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="game-container">
+  <button class="mute-btn" id="muteBtn" title="Silenciar/Activar sonido">🔊</button>
+
+  <section class="screen active" id="startScreen" aria-labelledby="title">
+    <header>
+      <h1 id="title">Grupos de vertebrados</h1>
+      <div class="subtitle">Clasifica los siguientes vertebrados en su correspondiente grupo</div>
+    </header>
+    <div class="start-content">
+      <div class="advice-box" role="note" aria-live="polite">
+        Recuerda: los vertebrados se clasifican según sus características Sus tipos son: 
+        <span class="highlight-keyword">mamíferos</span>, <span class="highlight-keyword">aves</span>; <span class="highlight-keyword">reptiles</span>, <span class="highlight-keyword">peces</span> y <span class="highlight-keyword">anfibios</span>.
+        <br><br>
+        <div style="text-align: center;"><strong>¡Ánimo!</strong></div>
+      </div>
+      <button class="btn btn-primary" id="playBtn">Comenzar</button>
+      
+      <img class="start-image" src="https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/refs/heads/main/Ni%C3%B1os.png" alt="Children learning">
+    </div>
+  </section>
+
+  <section class="screen" id="gameScreen">
+    <header>
+      <h1>Indica a qué grupo pertenecen estos vertebrados</h1>
+    </header>
+    
+    <div class="game-help-text">
+      Usa la <span class="highlight-keyword">lista desplegable</span> para seleccionar el grupo.
+    </div>
+
+    <div class="game-info">
+      <div class="level-indicator" id="levelIndicator">Nivel 1/14</div>
+      <div class="progress-bar" aria-label="Progreso"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="timer" id="timer">00:00.0</div>
+    </div>
+
+    <div class="board">
+      <div class="image-container">
+        <img id="animalImg" src="" alt="Imagen de vertebrado">
+      </div>
+
+      <div class="select-container">
+        <label id="selectLabel" for="customSelect" class="select-label">Vertebrado</label>
+        <div id="customSelect" class="custom-select" role="listbox" tabindex="0" aria-expanded="false" aria-labelledby="selectLabel">
+          <span id="selectSelected" class="select-selected">Seleccionar opción</span>
+          <span class="select-arrow">▼</span>
+        </div>
+        <div id="selectOptions" class="select-options" role="presentation">
+            </div>
+      </div>
+
+      <div class="game-buttons-area">
+        <button class="btn btn-blue" id="checkBtn">Comprobar</button>
+        <button class="btn btn-primary" id="continueBtn" style="display:none;">Continuar</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="resultsScreen">
+    <header>
+      <h1 class="final-title">Grupos de vertebrados</h1>
+    </header>
+    <div class="results">
+      <div id="trophyBox" style="display:none;">
+        <div class="trophy">🏆</div>
+      </div>
+      <div class="score-title">Puntuación:</div>
+      <div class="big-score" id="finalScore">0</div>
+      <div id="finalMsg" class="final-msg-style"></div>
+      <div class="final-time">Tiempo empleado: <span id="finalTime">00:00.0</span></div>
+      <button class="btn btn-primary" id="backToMenuBtn" style="background-color:#f59e42;">Volver al menú</button>
+      <span class="credit">Creado por Manuel J. Ventura</span>
+      <img class="school-logo" src="https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/refs/heads/main/Siurot.png" alt="School logo" />
+    </div>
+  </section>
+</div>
+
+<div class="loading-indicator" id="loadingIndicator" style="display: none;">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Cargando recursos...</div>
+</div>
+
+<script>
+/************** Data **************/
+const VERTEBRATES_DATA = [
+  { group: 'Mamífero', image: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Delfin.png' },
+  { group: 'Mamífero', image: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Koala.png' },
+  { group: 'Mamífero', image: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Murcielago.png' },
+  { group: 'Mamífero', image: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/vaca.png' },
+  { group: 'Ave', image: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Avestruz.png' },
+  { group: 'Ave', image: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Kiwi.png' },
+  { group: 'Ave', image: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Pinguino.png' },
+  { group: 'Reptil', image: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Camaleon.png' },
+  { group: 'Reptil', image: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Cocodrilo.png' },
+  { group: 'Reptil', image: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Serpiente.png' },
+  { group: 'Reptil', image: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Tortuga.png' },
+  { group: 'Pez', image: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Sardina.png' },
+  { group: 'Pez', image: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/tiburon.png' },
+  { group: 'Anfibio', image: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/Rana.png' }
+];
+
+const GROUPS_CONFIG = {
+    "Mamífero": { letter: 'M', rest: 'amífero', class: 'letter-m' },
+    "Ave": { letter: 'A', rest: 've', class: 'letter-a-ave' },
+    "Reptil": { letter: 'R', rest: 'eptil', class: 'letter-r' },
+    "Pez": { letter: 'P', rest: 'ez', class: 'letter-p' },
+    "Anfibio": { letter: 'A', rest: 'nfibio', class: 'letter-a-anf' }
+};
+
+const TOTAL_QUESTIONS = VERTEBRATES_DATA.length;
+
+/************** Audio **************/
+const soundFiles = {
+  completed: 'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/7b86808e254100aeaba6285b3e0b82650ae78055/Completado.mp3',
+  correct:   'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/7b86808e254100aeaba6285b3e0b82650ae78055/Correcto.mp3',
+  victory:   'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/7b86808e254100aeaba6285b3e0b82650ae78055/Termin%C3%A9.mp3',
+  error:     'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/7b86808e254100aeaba6285b3e0b82650ae78055/Error.mp3',
+  tap:       'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/37b3eb2da9c15c04dfb71dfe1be60f088ea3cdfc/Tap.mp3'
+};
+const sounds = {}; let isMuted = false; let audioUnlocked = false;
+
+function preloadSounds() {
+  const promises = Object.entries(soundFiles).map(([k, url]) => {
+    return new Promise((resolve) => {
+      const a = new Audio(url);
+      a.preload = 'auto';
+      a.oncanplaythrough = () => { sounds[k] = a; resolve(); };
+      a.onerror = () => { resolve(); };
+    });
+  });
+  return Promise.all(promises);
+}
+
+function unlockAudio(){
+  if (audioUnlocked) return;
+  const ctx = new (window.AudioContext||window.webkitAudioContext)();
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  g.gain.value = 0.0001; o.start(); o.stop(ctx.currentTime + 0.01);
+  audioUnlocked = true;
+}
+
+function play(name){
+  if(isMuted || !sounds[name]) return;
+  const clone = sounds[name].cloneNode(true);
+  clone.play().catch(e => console.log("Audio play blocked"));
+}
+
+/************** State **************/
+const el = (id) => document.getElementById(id);
+let gameOrder = [];
+let currentPairIndex = 0;
+let correctFirstAttempts = 0;
+let timerInt = null;
+let elapsed = 0;
+let currentSelection = null;
+let isProcessing = false;
+
+/************** Utilities **************/
+function fmtTime(sFloat){
+    const m = Math.floor(sFloat / 60).toString().padStart(2,'0');
+    const secs = Math.floor(sFloat % 60).toString().padStart(2,'0');
+    const tenths = Math.floor((sFloat % 1) * 10).toString();
+    return `${m}:${secs}.${tenths}`;
+}
+
+function startTimer(){ 
+    clearInterval(timerInt); 
+    let startTime = Date.now();
+    timerInt = setInterval(()=>{ 
+        elapsed = (Date.now() - startTime) / 1000;
+        el('timer').textContent = fmtTime(elapsed); 
+    },100); 
+}
+
+function stopTimer(){ clearInterval(timerInt); }
+
+function shuffle(a){ 
+    const arr=[...a]; 
+    for(let i=arr.length-1;i>0;i--){ 
+        const j=Math.floor(Math.random()*(i+1)); 
+        [arr[i],arr[j]]=[arr[j],arr[i]]; 
+    } 
+    return arr; 
+}
+
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    el(screenId).classList.add('active');
+}
+
+/************** Dropdown logic **************/
+function closeSelect() {
+  el('selectOptions').classList.remove('open');
+  el('customSelect').classList.remove('open');
+}
+
+function openSelect() {
+  if (isProcessing) return;
+  play('tap');
+  el('selectOptions').classList.add('open');
+  el('customSelect').classList.add('open');
+}
+
+function createDropdownOptions() {
+  const optionsEl = el('selectOptions');
+  optionsEl.innerHTML = '';
+  Object.keys(GROUPS_CONFIG).forEach(key => {
+    const config = GROUPS_CONFIG[key];
+    const div = document.createElement('div');
+    div.className = 'select-option';
+    div.innerHTML = `<span class="${config.class}">${config.letter}</span>${config.rest}`;
+    div.addEventListener('click', () => {
+        play('tap');
+        currentSelection = key;
+        el('selectSelected').innerHTML = div.innerHTML;
+        closeSelect();
+        el('customSelect').classList.remove('correct', 'incorrect');
+        el('checkBtn').style.display = 'inline-flex';
+        el('checkBtn').disabled = false;
+    });
+    optionsEl.appendChild(div);
+  });
+}
+
+el('customSelect').addEventListener('click', (e) => {
+  if (el('selectOptions').classList.contains('open')) closeSelect();
+  else openSelect();
+});
+
+document.addEventListener('click', (e) => {
+  if (!el('customSelect').contains(e.target)) closeSelect();
+});
+
+/************** Game Flow **************/
+function setupGame() {
+  gameOrder = shuffle([...Array(VERTEBRATES_DATA.length).keys()]);
+  currentPairIndex = 0;
+  correctFirstAttempts = 0;
+  createDropdownOptions();
+  showCurrentQuestion();
+  showScreen('gameScreen');
+  startTimer();
+}
+
+function showCurrentQuestion() {
+  isProcessing = false;
+  const currentData = VERTEBRATES_DATA[gameOrder[currentPairIndex]];
+  el('animalImg').src = currentData.image;
+  el('levelIndicator').textContent = `Nivel ${currentPairIndex + 1}/${TOTAL_QUESTIONS}`;
+  el('progressFill').style.width = ((currentPairIndex) / TOTAL_QUESTIONS * 100) + '%';
+  
+  currentSelection = null;
+  el('selectSelected').textContent = `Seleccionar opción`;
+  el('customSelect').classList.remove('correct', 'incorrect');
+  el('checkBtn').style.display = 'inline-flex';
+  el('checkBtn').disabled = true;
+  el('continueBtn').style.display = 'none';
+}
+
+function checkAnswer() {
+  if (isProcessing || currentSelection === null) return;
+  isProcessing = true;
+
+  const correct = VERTEBRATES_DATA[gameOrder[currentPairIndex]].group;
+  const selEl = el('selectSelected');
+  const customSel = el('customSelect');
+
+  if (currentSelection === correct) {
+    play('correct');
+    customSel.classList.add('correct');
+    selEl.classList.add('correct-blink');
+    
+    // Si es el primer intento del nivel (no se falló previamente en este mismo nivel)
+    if (el('continueBtn').style.display === 'none') {
+        correctFirstAttempts++;
+    }
+
+    setTimeout(() => {
+      selEl.classList.remove('correct-blink');
+      currentPairIndex++;
+      if (currentPairIndex < TOTAL_QUESTIONS) showCurrentQuestion();
+      else finishGame();
+    }, 600);
+  } else {
+    play('error');
+    customSel.classList.add('incorrect');
+    selEl.classList.add('incorrect-blink');
+    el('checkBtn').style.display = 'none';
+    el('continueBtn').style.display = 'inline-flex';
+    isProcessing = false;
+  }
+}
+
+function finishGame(){
+  stopTimer();
+  showScreen('resultsScreen');
+  
+  const score = Math.round((correctFirstAttempts / TOTAL_QUESTIONS) * 100);
+  el('finalScore').textContent = score;
+  el('finalTime').textContent = fmtTime(elapsed);
+
+  let msg = "";
+  if (score === 100) {
+    msg = "¡Genial! ¡Puntuación perfecta!";
+    el('trophyBox').style.display = 'block';
+    play('victory');
+    spawnConfetti();
+  } else {
+    el('trophyBox').style.display = 'none';
+    play('completed');
+    if (score >= 80) msg = "Casi lo logras. ¡Sigue practicando!";
+    else if (score >= 50) msg = "No está mal, pero aún puedes hacerlo mejor";
+    else msg = "Vaya desastre... ¿Seguro que has estudiado?";
+  }
+  el('finalMsg').textContent = msg;
+}
+
+function spawnConfetti(){
+  for(let i=0;i<100;i++){
+    setTimeout(()=>{
+      const c=document.createElement('div'); c.className='confetti';
+      c.style.left=Math.random()*100+'vw'; c.style.top='-10px';
+      c.style.backgroundColor=['#f59e42','#2ecc71','#3498db','#e74c3c'][Math.floor(Math.random()*4)];
+      c.style.setProperty('--tx', (Math.random()-0.5)*200+'px');
+      c.style.setProperty('--ty', (window.innerHeight+20)+'px');
+      document.body.appendChild(c);
+      setTimeout(()=>c.remove(), 3000);
+    }, i*20);
+  }
+}
+
+/************** Events **************/
+el('playBtn').addEventListener('click', async ()=>{
+  unlockAudio();
+  play('tap');
+  el('loadingIndicator').style.display = 'flex';
+  await preloadSounds();
+  el('loadingIndicator').style.display = 'none';
+  setupGame();
+});
+
+el('checkBtn').addEventListener('click', checkAnswer);
+
+el('continueBtn').addEventListener('click', () => {
+  play('tap');
+  el('selectSelected').classList.remove('incorrect-blink');
+  currentPairIndex++;
+  if (currentPairIndex < TOTAL_QUESTIONS) showCurrentQuestion();
+  else finishGame();
+});
+
+el('backToMenuBtn').addEventListener('click', ()=>{
+  play('tap');
+  showScreen('startScreen');
+});
+
+el('muteBtn').addEventListener('click', ()=>{
+  isMuted = !isMuted;
+  el('muteBtn').textContent = isMuted ? '🔇' : '🔊';
+});
+
+</script>
+</body>
+</html>
